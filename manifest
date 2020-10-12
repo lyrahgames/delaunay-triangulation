@@ -1,0 +1,11 @@
+: 1
+name: delaunay
+version: 0.1.0-a.0.z
+summary: delaunay C++ executable
+license: other: proprietary ; Not free/open source.
+description-file: README.md
+url: https://example.org/delaunay
+email: lyrahgames@mailbox.org
+depends: * build2 >= 0.13.0
+depends: * bpkg >= 0.13.0
+#depends: libhello ^1.0.0

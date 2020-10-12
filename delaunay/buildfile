@@ -1,0 +1,6 @@
+libs =
+import libs += sfml-graphics%lib{sfml-graphics}
+
+exe{delaunay}: {hxx ixx txx cxx}{**} $libs
+
+cxx.poptions =+ "-I$out_root" "-I$src_root"
