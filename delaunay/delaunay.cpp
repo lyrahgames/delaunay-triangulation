@@ -11,6 +11,11 @@ struct triangle {
   size_t pid[3];
 };
 
+struct circle {
+  point center;
+  float radius;
+};
+
 int main() {
   using namespace std;
 
@@ -25,6 +30,22 @@ int main() {
   }
 
   vector<triangle> triangles{{0, 1, 2}};
+
+  const auto circumcircle = [&points](const triangle& t) {
+    const point edge1{points[t.pid[1]].x - points[t.pid[0]].x,
+                      points[t.pid[1]].y - points[t.pid[0]].y};
+    const point edge2{points[t.pid[2]].x - points[t.pid[0]].x,
+                      points[t.pid[2]].y - points[t.pid[0]].y};
+    const auto d = 2.0f * (edge1.x * edge2.y - edge1.y * edge2.x);
+    const auto inv_d = 1.0f / d;
+    const auto norm_edge1 = edge1.x * edge1.x + edge1.y * edge1.y;
+    const auto norm_edge2 = edge2.x * edge2.x + edge2.y * edge2.y;
+    const point center{inv_d * (edge2.y * norm_edge1 - edge1.y * norm_edge2),
+                       inv_d * (edge1.x * norm_edge2 - edge2.x * norm_edge1)};
+    return circle{
+        {center.x + points[t.pid[0]].x, center.y + points[t.pid[0]].y},
+        sqrt(center.x * center.x + center.y * center.y)};
+  };
 
   size_t width = 500;
   size_t height = 500;
@@ -91,6 +112,16 @@ int main() {
       vertices.push_back(
           sf::Vertex(projection(points[t.pid[0]].x, points[t.pid[0]].y),
                      sf::Color::Black));
+
+      const auto c = circumcircle(t);
+      const auto radius = c.radius * height / fov_y;
+      sf::CircleShape shape(radius);
+      shape.setFillColor(sf::Color(0, 0, 0, 0));
+      shape.setOutlineColor(sf::Color::Black);
+      shape.setOutlineThickness(1.5f);
+      shape.setOrigin(radius, radius);
+      shape.setPosition(projection(c.center.x, c.center.y));
+      window.draw(shape);
     }
     window.draw(vertices.data(), vertices.size(), sf::Lines);
 
