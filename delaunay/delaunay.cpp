@@ -1,4 +1,5 @@
 #include <SFML/Graphics.hpp>
+#include <iomanip>
 #include <iostream>
 #include <random>
 #include <vector>
@@ -30,6 +31,24 @@ int main() {
   }
 
   vector<triangle> triangles{{0, 1, 2}};
+
+  // Compute circumcircle intersection.
+  const auto axdx = points[0].x - points[3].x;
+  const auto aydy = points[0].y - points[3].y;
+  const auto bxdx = points[1].x - points[3].x;
+  const auto bydy = points[1].y - points[3].y;
+  const auto cxdx = points[2].x - points[3].x;
+  const auto cydy = points[2].y - points[3].y;
+  const auto sqsum_a = axdx * axdx + aydy * aydy;
+  const auto sqsum_b = bxdx * bxdx + bydy * bydy;
+  const auto sqsum_c = cxdx * cxdx + cydy * cydy;
+  const auto det = axdx * (bydy * sqsum_c - cydy * sqsum_b) -
+                   aydy * (bxdx * sqsum_c - cxdx * sqsum_b) +
+                   sqsum_a * (bxdx * cydy - cxdx * bydy);
+  const auto outer = (points[1].x - points[0].x) * (points[2].y - points[0].y) -
+                     (points[1].y - points[0].y) * (points[2].x - points[0].x);
+  const bool inside = (det * outer > 0.0f);
+  cout << "inside = " << boolalpha << inside << '\n';
 
   const auto circumcircle = [&points](const triangle& t) {
     const point edge1{points[t.pid[1]].x - points[t.pid[0]].x,
