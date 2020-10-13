@@ -1,4 +1,5 @@
 #include <SFML/Graphics.hpp>
+#include <chrono>
 #include <iomanip>
 #include <iostream>
 #include <random>
@@ -63,10 +64,10 @@ int main() {
   vector<point> points(point_count);
 
   // Set bounding quad.
-  points[0] = {-3.0f, -3.0f};
-  points[1] = {3.0f, -3.0f};
-  points[2] = {3.0f, 3.0f};
-  points[3] = {-3.0f, 3.0f};
+  points[0] = {-300.0f, -300.0f};
+  points[1] = {300.0f, -300.0f};
+  points[2] = {300.0f, 300.0f};
+  points[3] = {-300.0f, 300.0f};
   unordered_set<triangle, triangle::hash> triangles{{0, 1, 2}, {2, 3, 0}};
 
   const auto circumcircle = [&points](const triangle& t) {
@@ -121,131 +122,13 @@ int main() {
     return (d * det) > 0.0f;
   };
 
-  // const auto add_point = [&]() {
-  //   const auto pid = points.size();
-  //   points.push_back({dist(rng), dist(rng)});
-  //   triangle nt[3];
-  //   for (size_t tid = 0; tid < triangles.size(); ++tid) {
-  //     auto& t = triangles[tid];
-  //     if (intersection(t, pid)) {
-  //       nt[0].pid[0] = t.pid[0];
-  //       nt[0].pid[1] = t.pid[1];
-  //       nt[0].pid[2] = pid;
-
-  //       nt[0].tnid[0] = t.tnid[0];
-  //       nt[0].tnid[1] = (triangles.size() + 0 << 2) | 0b01;
-  //       nt[0].tnid[2] = (triangles.size() + 1 << 2) | 0b00;
-
-  //       nt[1].pid[0] = t.pid[1];
-  //       nt[1].pid[1] = t.pid[2];
-  //       nt[1].pid[2] = pid;
-
-  //       nt[1].tnid[0] = t.tnid[1];
-  //       nt[1].tnid[1] = (triangles.size() + 1 << 2) | 0b01;
-  //       nt[1].tnid[2] = (tid << 2) | 0b00;
-
-  //       nt[2].pid[0] = t.pid[2];
-  //       nt[2].pid[1] = t.pid[0];
-  //       nt[2].pid[2] = pid;
-
-  //       nt[2].tnid[0] = t.tnid[2];
-  //       nt[2].tnid[1] = (tid << 2) | 0b01;
-  //       nt[2].tnid[2] = (triangles.size() << 2) | 0b00;
-
-  //       constexpr int npid_id_buffer[] = {0, 1, 2, 0, 1};
-
-  //       // neighbor 0
-  //       if (t.tnid[0] != 0b11) {
-  //         const auto npid_id = t.tnid[0] & 0b11;
-  //         const auto ntid = t.tnid[0] >> 2;
-  //         triangles[ntid].tnid[npid_id_buffer[npid_id + 1]] = (tid << 2) |
-  //         0b10; if (circumcircle_intersection(triangles[ntid], pid)) {
-  //           // Do the edge flip.
-  //           const auto npid = triangles[ntid].pid[npid_id];
-  //           triangle ntt;
-  //           ntt.pid[0] = pid;
-  //           ntt.pid[1] = npid;
-  //           ntt.pid[2] = t.pid[1];
-  //           ntt.tnid[0] = (tid << 2) | 0b10;
-  //           ntt.tnid[1] = triangles[ntid].tnid[npid_id];
-  //           ntt.tnid[2] = nt[0].tnid[1];
-
-  //           nt[0].pid[0] = npid;
-  //           nt[0].pid[1] = pid;
-  //           nt[0].pid[2] = t.pid[0];
-  //           nt[0].tnid[0] = (ntid << 2) | 0b10;
-  //           nt[0].tnid[1] = nt[0].tnid[2];
-  //           nt[0].tnid[2] = triangles[ntid].tnid[(npid_id + 2) % 3];
-
-  //           triangles[ntid] = ntt;
-  //         }
-  //       }
-  //       // neighbor 1
-  //       if (t.tnid[1] != 0b11) {
-  //         const auto npid_id = t.tnid[1] & 0b11;
-  //         const auto ntid = t.tnid[1] >> 2;
-  //         triangles[ntid].tnid[npid_id_buffer[npid_id + 1]] =
-  //             (triangles.size() << 2) | 0b10;
-  //         if (circumcircle_intersection(triangles[ntid], pid)) {
-  //           // Do the edge flip.
-  //           const auto npid = triangles[ntid].pid[npid_id];
-  //           triangle ntt;
-  //           ntt.pid[0] = pid;
-  //           ntt.pid[1] = npid;
-  //           ntt.pid[2] = t.pid[2];
-  //           ntt.tnid[0] = (tid << 2) | 0b10;
-  //           ntt.tnid[1] = triangles[ntid].tnid[npid_id];
-  //           ntt.tnid[2] = nt[1].tnid[1];
-
-  //           nt[1].pid[0] = npid;
-  //           nt[1].pid[1] = pid;
-  //           nt[1].pid[2] = t.pid[1];
-  //           nt[1].tnid[0] = (ntid << 2) | 0b10;
-  //           nt[1].tnid[1] = nt[1].tnid[2];
-  //           nt[1].tnid[2] = triangles[ntid].tnid[(npid_id + 2) % 3];
-
-  //           triangles[ntid] = ntt;
-  //         }
-  //       }
-  //       // neighbor 2
-  //       if (t.tnid[2] != 0b11) {
-  //         const auto npid_id = t.tnid[2] & 0b11;
-  //         const auto ntid = t.tnid[2] >> 2;
-  //         triangles[ntid].tnid[npid_id_buffer[npid_id + 1]] =
-  //             ((triangles.size() + 1) << 2) | 0b10;
-  //         if (circumcircle_intersection(triangles[ntid], pid)) {
-  //           // Do the edge flip.
-  //           const auto npid = triangles[ntid].pid[npid_id];
-  //           triangle ntt;
-  //           ntt.pid[0] = pid;
-  //           ntt.pid[1] = npid;
-  //           ntt.pid[2] = t.pid[0];
-  //           ntt.tnid[0] = (tid << 2) | 0b10;
-  //           ntt.tnid[1] = triangles[ntid].tnid[npid_id];
-  //           ntt.tnid[2] = nt[2].tnid[1];
-
-  //           nt[2].pid[0] = npid;
-  //           nt[2].pid[1] = pid;
-  //           nt[2].pid[2] = t.pid[2];
-  //           nt[2].tnid[0] = (ntid << 2) | 0b10;
-  //           nt[2].tnid[1] = nt[2].tnid[2];
-  //           nt[2].tnid[2] = triangles[ntid].tnid[(npid_id + 2) % 3];
-
-  //           triangles[ntid] = ntt;
-  //         }
-  //       }
-
-  //       t = nt[0];
-  //       break;
-  //     }
-  //   }
-  //   triangles.push_back(nt[1]);
-  //   triangles.push_back(nt[2]);
-  // };
-
   const auto bw_add_point = [&]() {
-    point p{dist(rng), dist(rng)};
     size_t pid = points.size();
+    // point p{dist(rng), dist(rng)};
+    const auto phi = M_PI * dist(rng);
+    const auto r = 3.0f * sqrt((dist(rng) + 5.0) / 6.0f);
+    point p{r * cos(phi), r * sin(phi)};
+    if (points.size() == 400) p = {};
     points.push_back(p);
 
     unordered_map<edge, int, edge::hash> polygon{};
@@ -327,7 +210,14 @@ int main() {
               break;
 
             case sf::Keyboard::Enter:
-              for (int i = 0; i < 100; ++i) bw_add_point();
+              constexpr int n = 1000;
+              const auto start = chrono::high_resolution_clock::now();
+              for (int i = 0; i < n; ++i) bw_add_point();
+              const auto end = chrono::high_resolution_clock::now();
+              cout << "t = " << chrono::duration<float>(end - start).count()
+                   << " s\n"
+                   << "n = " << points.size() << '\n'
+                   << flush;
               break;
           }
           break;
