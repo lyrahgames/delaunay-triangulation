@@ -1,5 +1,5 @@
 #include <SFML/Graphics.hpp>
-#include <delaunay/delaunay.hpp>
+#include <delaunay/geometry.hpp>
 #include <iomanip>
 #include <iostream>
 #include <vector>
@@ -128,7 +128,7 @@ int main() {
       // draw_point(c.center);
     };
 
-    const auto draw_aabb = [&](const geometry::aabb& b) {
+    const auto draw_aabb = [&](const geometry::aabb_t& b) {
       vector<sf::Vertex> vertices{};
       vertices.push_back(
           sf::Vertex(projection(b.min.x, b.min.y), sf::Color::Black));
@@ -155,7 +155,7 @@ int main() {
     draw_circle(c);
     draw_aabb(geometry::bounding_box(t));
     draw_aabb(geometry::bounding_box(c));
-    draw_circle(geometry::circumcircle(geometry::bounding_box(t)));
+    draw_circle(geometry::circumcircle(geometry::aabb(t)));
 
     // Draw all points.
     for (const auto& p : points) {

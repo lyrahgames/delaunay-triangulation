@@ -2,6 +2,7 @@ libs =
 import libs += sfml-graphics%lib{sfml-graphics}
 
 ./: exe{delaunay}: cxx{delaunay} $libs
-./: exe{geometry}: cxx{geometry} hxx{delaunay} $libs
+./: exe{geometry}: cxx{geometry} hxx{geometry} $libs
+./: exe{main}: hxx{*} cxx{main} $libs
 
 cxx.poptions =+ "-I$out_root" "-I$src_root"
