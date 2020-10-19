@@ -35,16 +35,19 @@ int main(void) {
   for (auto& p : points) {
     const auto u = 2 * dist(rng) - 1;
     const auto phi = 2 * M_PI * dist(rng);
-    const auto r = pow(dist(rng), 1 / 3.0f);
+    // const auto r = pow(dist(rng), 1 / 3.0f);
+    const auto r = 1.0f;
     const auto v = sqrt(1 - u * u);
     p = r * glm::vec3{cos(phi) * v, sin(phi) * v, u};
     const auto rr = dist(rng);
-    if (rr <= 0.3333f)
-      p += glm::vec3{3, 1.6, 1.6};
-    else if (rr <= 0.6666f)
-      p += glm::vec3{1.6, 3, 1.6};
+    if (rr <= 0.25f)
+      p += glm::vec3{3, 1.5, 1.5};
+    else if (rr <= 0.5f)
+      p += glm::vec3{1.5, 3, 1.5};
+    else if (rr <= 0.75f)
+      p += glm::vec3{1.5, 1.5, 3};
     else
-      p += glm::vec3{1.6, 1.6, 3};
+      p += glm::vec3{2.45, 2.45, 2.45};
   }
 
   // Compute pareto front.
@@ -59,6 +62,7 @@ int main(void) {
     if (!pareto_dominated) pareto_points.push_back(p);
   }
 
+  // Project points to plane with normal = (1,1,1) and get Delaunay points.
   glm::vec3 pu{1.0f / sqrt(2.0f), -1.0f / sqrt(2.0f), 0.0f};
   glm::vec3 pv{-1.0f / sqrt(6.0f), -1.0f / sqrt(6.0f), 2.0f / sqrt(6.0f)};
   vector<glm::vec3> projected_points = pareto_points;
@@ -68,8 +72,52 @@ int main(void) {
     delaunay_points.push_back({dot(pu, p), dot(pv, p)});
   }
 
+  // Triangulate Pareto front.
   delaunay::triangulation triangulation{};
-  const auto elements = triangulation.triangle_data(delaunay_points);
+  auto elements = triangulation.triangle_data(delaunay_points);
+
+  float mean_distance = 0;
+  for (uint32_t i = 0; i < elements.size(); i += 3) {
+    mean_distance +=
+        length(pareto_points[elements[i]] - pareto_points[elements[i + 1]]);
+    mean_distance +=
+        length(pareto_points[elements[i + 1]] - pareto_points[elements[i + 2]]);
+    mean_distance +=
+        length(pareto_points[elements[i + 2]] - pareto_points[elements[i]]);
+  }
+  mean_distance /= elements.size();
+  cout << "mean distance = " << mean_distance << '\n';
+
+  constexpr auto sq = [](auto&& x) { return x * x; };
+
+  float var_distance = 0;
+  for (uint32_t i = 0; i < elements.size(); i += 3) {
+    var_distance +=
+        sq(length(pareto_points[elements[i]] - pareto_points[elements[i + 1]]) -
+           mean_distance);
+    var_distance += sq(length(pareto_points[elements[i + 1]] -
+                              pareto_points[elements[i + 2]]) -
+                       mean_distance);
+    var_distance +=
+        sq(length(pareto_points[elements[i + 2]] - pareto_points[elements[i]]) -
+           mean_distance);
+  }
+  var_distance /= elements.size();
+  cout << "var distance = " << var_distance << '\n'
+       << "stddev distance = " << sqrt(var_distance) << '\n';
+
+  vector<uint32_t> tmp{};
+  tmp.swap(elements);
+  for (uint32_t i = 0; i < tmp.size(); i += 3) {
+    if (max(max(length(pareto_points[tmp[i]] - pareto_points[tmp[i + 1]]),
+                length(pareto_points[tmp[i + 1]] - pareto_points[tmp[i + 2]])),
+            length(pareto_points[tmp[i + 2]] - pareto_points[tmp[i]])) <
+        mean_distance + 2.0f * sqrt(var_distance)) {
+      elements.push_back(tmp[i]);
+      elements.push_back(tmp[i + 1]);
+      elements.push_back(tmp[i + 2]);
+    }
+  }
 
   glfwSetErrorCallback([](int error, const char* description) {
     throw runtime_error{"GLFW Error " + to_string(error) + ": " + description};
@@ -195,12 +243,14 @@ int main(void) {
     glDrawArrays(GL_POINTS, 0, points.size());
 
     glPointSize(5.0f);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * pareto_points.size(),
                  pareto_points.data(), GL_DYNAMIC_DRAW);
     glDrawArrays(GL_POINTS, 0, pareto_points.size());
     glDrawElements(GL_TRIANGLES, elements.size(), GL_UNSIGNED_INT, nullptr);
 
     glPointSize(3.0f);
+    // glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * projected_points.size(),
                  projected_points.data(), GL_DYNAMIC_DRAW);
     glDrawArrays(GL_POINTS, 0, projected_points.size());
