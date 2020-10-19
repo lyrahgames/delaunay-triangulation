@@ -30,7 +30,7 @@ int main(void) {
   // Generate random points in sphere.
   mt19937 rng{random_device{}()};
   uniform_real_distribution<float> dist{0.0f, 1.0f};
-  const size_t samples = 10000;
+  const size_t samples = 50000;
   vector<glm::vec3> points(samples);
   for (auto& p : points) {
     const auto u = 2 * dist(rng) - 1;
@@ -41,13 +41,22 @@ int main(void) {
     p = r * glm::vec3{cos(phi) * v, sin(phi) * v, u};
     const auto rr = dist(rng);
     if (rr <= 0.25f)
-      p += glm::vec3{3, 1.5, 1.5};
+      if (rr <= 0.125f)
+        p += glm::vec3{3, 1.5, 1.5};
+      else
+        p += glm::vec3{2.2, 2.2, 1.0};
     else if (rr <= 0.5f)
-      p += glm::vec3{1.5, 3, 1.5};
+      if (rr <= 0.375f)
+        p += glm::vec3{1.5, 3, 1.5};
+      else
+        p += glm::vec3{2.2, 1.0, 2.2};
     else if (rr <= 0.75f)
-      p += glm::vec3{1.5, 1.5, 3};
+      if (rr <= 0.625f)
+        p += glm::vec3{1.5, 1.5, 3};
+      else
+        p += glm::vec3{1.0, 2.2, 2.2};
     else
-      p += glm::vec3{2.45, 2.45, 2.45};
+      p += glm::vec3{2.02, 2.02, 2.02};
   }
 
   // Compute pareto front.

@@ -37,9 +37,29 @@ struct triangulation {
     };
 
     triangle(size_t pid0, size_t pid1, size_t pid2) : pid{pid0, pid1, pid2} {
-      if (pid[0] > pid[1]) std::swap(pid[0], pid[1]);
-      if (pid[1] > pid[2]) std::swap(pid[1], pid[2]);
-      if (pid[0] > pid[1]) std::swap(pid[0], pid[1]);
+      // if (pid[0] > pid[1]) std::swap(pid[0], pid[1]);
+      // if (pid[1] > pid[2]) std::swap(pid[1], pid[2]);
+      // if (pid[0] > pid[1]) std::swap(pid[0], pid[1]);
+
+      // Make sure clockwise and counterclockwise orders are preserved.
+      // Move minimal index to start and cyclically interchange others.
+      if (pid[0] < pid[1]) {
+        if (pid[2] < pid[0]) {
+          pid[0] = pid2;
+          pid[1] = pid0;
+          pid[2] = pid1;
+        }
+      } else {
+        if (pid[1] < pid[2]) {
+          pid[0] = pid1;
+          pid[1] = pid2;
+          pid[2] = pid0;
+        } else {
+          pid[0] = pid2;
+          pid[1] = pid0;
+          pid[2] = pid1;
+        }
+      }
     }
 
     size_t pid[3];

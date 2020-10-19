@@ -67,6 +67,7 @@ constexpr auto circumcircle_intersection(const triangle& t,
   const auto det = axdx * (bydy * sqsum_c - cydy * sqsum_b) -
                    aydy * (bxdx * sqsum_c - cxdx * sqsum_b) +
                    sqsum_a * (bxdx * cydy - cxdx * bydy);
+  // return det > 0.0f;
   const point edge1{t.vertex[1].x - t.vertex[0].x,
                     t.vertex[1].y - t.vertex[0].y};
   const point edge2{t.vertex[2].x - t.vertex[0].x,
