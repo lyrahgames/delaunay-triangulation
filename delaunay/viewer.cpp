@@ -20,17 +20,22 @@ float height = 450;
 glm::vec2 fov{30.0f * width / height, 30.0f};
 glm::vec3 origin{};
 glm::vec3 up{0, 1, 0};
-glm::vec3 camera{5, 0.0f, 0};
+glm::vec3 camera{5, 0.0f, M_PI_2};
 
 int main(void) {
   using namespace std;
 
   // Generate random points.
   mt19937 rng{random_device{}()};
-  uniform_real_distribution<float> dist{-1, 1};
+  uniform_real_distribution<float> dist{0.5, 1.5};
   const size_t samples = 100;
   vector<glm::vec3> points(samples);
   for (auto& p : points) p = {dist(rng), dist(rng), dist(rng)};
+
+  glm::vec3 pu{1.0f / sqrt(2.0f), -1.0f / sqrt(2.0f), 0.0f};
+  glm::vec3 pv{-1.0f / sqrt(6.0f), -1.0f / sqrt(6.0f), 2.0f / sqrt(6.0f)};
+  vector<glm::vec3> projected_points = points;
+  for (auto& p : projected_points) p = dot(pu, p) * pu + dot(pv, p) * pv;
 
   glfwSetErrorCallback([](int error, const char* description) {
     throw runtime_error{"GLFW Error " + to_string(error) + ": " + description};
@@ -122,8 +127,8 @@ int main(void) {
     int state = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT);
     if (state == GLFW_PRESS) {
       const auto mouse_move = mouse_pos - old_mouse_pos;
-      camera.z -= mouse_move.x * 0.01;
-      camera.y -= mouse_move.y * 0.01;
+      camera.z += mouse_move.x * 0.01;
+      camera.y += mouse_move.y * 0.01;
       const constexpr float eye_altitude_max_abs = M_PI_2 - 0.0001f;
       camera.y = clamp(camera.y, -eye_altitude_max_abs, eye_altitude_max_abs);
     }
@@ -132,18 +137,23 @@ int main(void) {
     glClear(GL_COLOR_BUFFER_BIT);
 
     glm::mat4x4 m{1.0f};
-    // m = rotate(m, (float)glfwGetTime(), glm::vec3(1, 1, 1));
-    const auto v =
-        glm::lookAt(camera.x * glm::vec3{cos(camera.y) * cos(camera.z),  //
-                                         sin(camera.y),                  //
-                                         cos(camera.y) * sin(camera.z)},
-                    origin, up);
-    const auto p = glm::perspective(fov.y, width / height, 0.1f, 100.f);
+    m = rotate(m, (float)glfwGetTime(), glm::vec3(1, 1, 1));
+    const auto v = glm::lookAt(
+        origin + camera.x * glm::vec3{cos(camera.y) * cos(camera.z),  //
+                                      sin(camera.y),                  //
+                                      cos(camera.y) * sin(camera.z)},
+        origin, up);
+    const auto p = glm::perspective(-fov.y, width / height, 0.1f, 100.f);
     glm::mat4 mvp = p * v * m;
 
     glUseProgram(program);
     glUniformMatrix4fv(mvp_location, 1, GL_FALSE, glm::value_ptr(mvp));
+    glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * points.size(),
+                 points.data(), GL_DYNAMIC_DRAW);
     glDrawArrays(GL_POINTS, 0, points.size());
+    glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * projected_points.size(),
+                 projected_points.data(), GL_DYNAMIC_DRAW);
+    glDrawArrays(GL_POINTS, 0, projected_points.size());
 
     glfwSwapBuffers(window);
     glfwPollEvents();
