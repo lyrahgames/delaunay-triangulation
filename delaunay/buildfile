@@ -5,4 +5,9 @@ import libs += sfml-graphics%lib{sfml-graphics}
 ./: exe{geometry}: cxx{geometry} hxx{geometry} $libs
 ./: exe{main}: hxx{*} cxx{main} $libs
 
+import viewer_libs = glfw3%lib{glfw3}
+import viewer_libs += glbinding%lib{glbinding}
+import viewer_libs += glm%lib{glm}
+./: exe{viewer}: hxx{*} cxx{viewer} $viewer_libs
+
 cxx.poptions =+ "-I$out_root" "-I$src_root"
