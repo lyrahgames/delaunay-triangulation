@@ -47,6 +47,21 @@ struct triangulation {
 
   void add(const point& p);
 
+  std::vector<uint32_t> triangle_data(std::vector<point>& data) {
+    for (const auto& p : data) add(p);
+    std::vector<uint32_t> result{};
+    for (auto it = triangles.begin(); it != triangles.end(); ++it) {
+      auto& t = *it;
+      const auto mask = (~size_t{0}) << 2;
+      if ((t.pid[0] & mask) && (t.pid[1] & mask) && (t.pid[2] & mask)) {
+        result.push_back(t.pid[0] - 4);
+        result.push_back(t.pid[1] - 4);
+        result.push_back(t.pid[2] - 4);
+      }
+    }
+    return result;
+  }
+
   std::vector<point> points{
       {-300.0f, -300.0f},
       {300.0f, -300.0f},

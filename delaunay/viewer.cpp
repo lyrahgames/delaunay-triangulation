@@ -14,28 +14,62 @@ using namespace gl;
 #include <vector>
 //
 #include <glm/ext.hpp>
+//
+#include <delaunay/delaunay.hpp>
 
 float width = 800;
 float height = 450;
-glm::vec2 fov{30.0f * width / height, 30.0f};
+glm::vec2 fov{M_PI_4 * width / height, M_PI_4};
 glm::vec3 origin{};
 glm::vec3 up{0, 1, 0};
-glm::vec3 camera{5, 0.0f, M_PI_2};
+glm::vec3 camera{10, 0.0f, M_PI_2};
 
 int main(void) {
   using namespace std;
 
-  // Generate random points.
+  // Generate random points in sphere.
   mt19937 rng{random_device{}()};
-  uniform_real_distribution<float> dist{0.5, 1.5};
-  const size_t samples = 100;
+  uniform_real_distribution<float> dist{0.0f, 1.0f};
+  const size_t samples = 10000;
   vector<glm::vec3> points(samples);
-  for (auto& p : points) p = {dist(rng), dist(rng), dist(rng)};
+  for (auto& p : points) {
+    const auto u = 2 * dist(rng) - 1;
+    const auto phi = 2 * M_PI * dist(rng);
+    const auto r = pow(dist(rng), 1 / 3.0f);
+    const auto v = sqrt(1 - u * u);
+    p = r * glm::vec3{cos(phi) * v, sin(phi) * v, u};
+    const auto rr = dist(rng);
+    if (rr <= 0.3333f)
+      p += glm::vec3{3, 1.6, 1.6};
+    else if (rr <= 0.6666f)
+      p += glm::vec3{1.6, 3, 1.6};
+    else
+      p += glm::vec3{1.6, 1.6, 3};
+  }
+
+  // Compute pareto front.
+  vector<glm::vec3> pareto_points{};
+  for (const auto& p : points) {
+    bool pareto_dominated = false;
+    for (const auto& q : points) {
+      if (pareto_dominated = ((q.x <= p.x) && (q.y <= p.y) && (q.z <= p.z) &&
+                              ((q.x < p.x) || (q.y < p.y) || (q.z < p.z))))
+        break;
+    }
+    if (!pareto_dominated) pareto_points.push_back(p);
+  }
 
   glm::vec3 pu{1.0f / sqrt(2.0f), -1.0f / sqrt(2.0f), 0.0f};
   glm::vec3 pv{-1.0f / sqrt(6.0f), -1.0f / sqrt(6.0f), 2.0f / sqrt(6.0f)};
-  vector<glm::vec3> projected_points = points;
-  for (auto& p : projected_points) p = dot(pu, p) * pu + dot(pv, p) * pv;
+  vector<glm::vec3> projected_points = pareto_points;
+  vector<delaunay::point> delaunay_points{};
+  for (auto& p : projected_points) {
+    p = dot(pu, p) * pu + dot(pv, p) * pv;
+    delaunay_points.push_back({dot(pu, p), dot(pv, p)});
+  }
+
+  delaunay::triangulation triangulation{};
+  const auto elements = triangulation.triangle_data(delaunay_points);
 
   glfwSetErrorCallback([](int error, const char* description) {
     throw runtime_error{"GLFW Error " + to_string(error) + ": " + description};
@@ -70,6 +104,12 @@ int main(void) {
   GLuint vertex_array;
   glGenVertexArrays(1, &vertex_array);
   glBindVertexArray(vertex_array);
+
+  GLuint element_buffer;
+  glGenBuffers(1, &element_buffer);
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_buffer);
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER, elements.size() * sizeof(uint32_t),
+               elements.data(), GL_STATIC_DRAW);
 
   GLuint vertex_buffer;
   glGenBuffers(1, &vertex_buffer);
@@ -137,23 +177,34 @@ int main(void) {
     glClear(GL_COLOR_BUFFER_BIT);
 
     glm::mat4x4 m{1.0f};
-    m = rotate(m, (float)glfwGetTime(), glm::vec3(1, 1, 1));
+    // m = rotate(m, (float)glfwGetTime(), glm::vec3(1, 1, 1));
     const auto v = glm::lookAt(
         origin + camera.x * glm::vec3{cos(camera.y) * cos(camera.z),  //
                                       sin(camera.y),                  //
                                       cos(camera.y) * sin(camera.z)},
         origin, up);
-    const auto p = glm::perspective(-fov.y, width / height, 0.1f, 100.f);
+    const auto p = glm::perspective(fov.y, width / height, 0.1f, 100.f);
     glm::mat4 mvp = p * v * m;
 
     glUseProgram(program);
     glUniformMatrix4fv(mvp_location, 1, GL_FALSE, glm::value_ptr(mvp));
+
+    glPointSize(1.0f);
     glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * points.size(),
                  points.data(), GL_DYNAMIC_DRAW);
     glDrawArrays(GL_POINTS, 0, points.size());
+
+    glPointSize(5.0f);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * pareto_points.size(),
+                 pareto_points.data(), GL_DYNAMIC_DRAW);
+    glDrawArrays(GL_POINTS, 0, pareto_points.size());
+    glDrawElements(GL_TRIANGLES, elements.size(), GL_UNSIGNED_INT, nullptr);
+
+    glPointSize(3.0f);
     glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * projected_points.size(),
                  projected_points.data(), GL_DYNAMIC_DRAW);
     glDrawArrays(GL_POINTS, 0, projected_points.size());
+    glDrawElements(GL_TRIANGLES, elements.size(), GL_UNSIGNED_INT, nullptr);
 
     glfwSwapBuffers(window);
     glfwPollEvents();
