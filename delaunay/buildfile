@@ -11,5 +11,6 @@ import viewer_libs += glm%lib{glm}
 ./: exe{viewer}: hxx{*} cxx{viewer} $viewer_libs
 ./: exe{glm_test}: hxx{*} cxx{glm_test} $viewer_libs
 ./: exe{mosaic}: hxx{*} cxx{mosaic} $viewer_libs
+./: exe{tessellation}: hxx{*} cxx{tessellation} {h c}{stb_image} $viewer_libs
 
 cxx.poptions =+ "-I$out_root" "-I$src_root"

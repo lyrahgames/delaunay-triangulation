@@ -4,6 +4,9 @@
 !*.cpp
 !*.hpp
 
+!*.h
+!*.c
+
 !buildfile
 !root.build
 !bootstrap.build
