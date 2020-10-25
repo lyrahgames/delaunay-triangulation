@@ -9,5 +9,7 @@ import viewer_libs = glfw3%lib{glfw3}
 import viewer_libs += glbinding%lib{glbinding}
 import viewer_libs += glm%lib{glm}
 ./: exe{viewer}: hxx{*} cxx{viewer} $viewer_libs
+./: exe{glm_test}: hxx{*} cxx{glm_test} $viewer_libs
+./: exe{mosaic}: hxx{*} cxx{mosaic} $viewer_libs
 
 cxx.poptions =+ "-I$out_root" "-I$src_root"
