@@ -1,3 +1,4 @@
+#include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <random>
@@ -118,6 +119,24 @@ int main(int argc, char** argv) {
       vertices[i + j].v = vertices[i + j].y;
     }
   }
+
+  // Generate SVG.
+  fstream svg_file{"output.svg", ios::out};
+  svg_file << "<svg height=\"" << image_h << "\" width=\"" << image_w << "\">";
+  index = 0;
+  for (size_t i = 0; i < vertices.size(); i += 3, ++index) {
+    svg_file << "<polygon points=\"";
+    for (size_t j = 0; j < 3; ++j) {
+      svg_file << (vertices[i + j].x * image_h) << ','
+               << ((1.0f - vertices[i + j].y) * image_h) << ' ';
+    }
+    svg_file << "\" style=\"fill:rgb(" << (vertices[i].r * 255.0f) << ", "
+             << (vertices[i].g * 255.0f) << ", " << (vertices[i].b * 255.0f)
+             << ");stroke:rgb(" << (vertices[i].r * 255.0f) << ", "
+             << (vertices[i].g * 255.0f) << ", " << (vertices[i].b * 255.0f)
+             << ");stroke-width:0.1\" />";
+  }
+  svg_file << "</svg>" << flush;
 
   // Run the program.
   glfwSetErrorCallback([](int error, const char* description) {
