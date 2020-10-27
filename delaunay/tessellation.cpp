@@ -172,16 +172,25 @@ int main(int argc, char** argv) {
   glBufferData(GL_ARRAY_BUFFER, sizeof(vertex) * vertices.size(),
                vertices.data(), GL_STATIC_DRAW);
 
-  GLuint texture;
-  glGenTextures(1, &texture);
-  glBindTexture(GL_TEXTURE_2D, texture);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, image_w, image_h, 0, GL_RGBA,
-               GL_UNSIGNED_BYTE, image_data);
-  glGenerateMipmap(GL_TEXTURE_2D);
+  // GLuint texture;
+  // glGenTextures(1, &texture);
+  // glBindTexture(GL_TEXTURE_2D, texture);
+  // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+  // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+  // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  // switch (image_channels) {
+  //   case 3:
+  //     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, image_w, image_h, 0, GL_RGB,
+  //                  GL_UNSIGNED_BYTE, image_data);
+  //     break;
+
+  //   case 4:
+  //     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, image_w, image_h, 0, GL_RGBA,
+  //                  GL_UNSIGNED_BYTE, image_data);
+  //     break;
+  // }
+  // glGenerateMipmap(GL_TEXTURE_2D);
   stbi_image_free(image_data);
 
   auto vertex_shader = glCreateShader(GL_VERTEX_SHADER);
@@ -205,7 +214,7 @@ int main(int argc, char** argv) {
       "#version 330\n"
       "in vec3 color;"
       "in vec2 texuv;"
-      "uniform sampler2D tex;"
+      // "uniform sampler2D tex;"
       "void main() {"
       "  gl_FragColor = vec4(color,1.0);"
       "}";
@@ -249,7 +258,7 @@ int main(int argc, char** argv) {
 
   glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
   glPointSize(5.0f);
-  glLineWidth(1.2f);
+  glLineWidth(0.5f);
 
   // glBindTexture(GL_TEXTURE_2D, texture);
 
